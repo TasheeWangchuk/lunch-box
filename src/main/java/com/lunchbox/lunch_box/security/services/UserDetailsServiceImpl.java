@@ -1,6 +1,5 @@
 package com.lunchbox.lunch_box.security.services;
 
-
 import com.lunchbox.lunch_box.modules.user.entity.User;
 import com.lunchbox.lunch_box.modules.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -17,9 +16,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     @Transactional
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + username));
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User Not Found with email: " + email));
 
         if (Boolean.FALSE.equals(user.getActive())) {
             throw new UsernameNotFoundException("User account is deactivated");

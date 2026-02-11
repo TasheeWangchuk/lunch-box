@@ -1,11 +1,11 @@
 package com.lunchbox.lunch_box.modules.user.controller;
 
 import com.lunchbox.lunch_box.modules.user.dto.AuthResponse;
+import com.lunchbox.lunch_box.modules.user.dto.LoginRequest;
 import com.lunchbox.lunch_box.modules.user.dto.RefreshTokenRequest;
+import com.lunchbox.lunch_box.modules.user.dto.RegisterRequest;
 import com.lunchbox.lunch_box.modules.user.dto.TokenData;
 import com.lunchbox.lunch_box.modules.user.service.AuthService;
-import com.lunchbox.lunch_box.security.request.LoginRequest;
-import com.lunchbox.lunch_box.security.request.SignupRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -31,8 +31,8 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse<String>> register(@Valid @RequestBody SignupRequest signupRequest) {
-        AuthResponse<String> response = authService.registerUser(signupRequest);
+    public ResponseEntity<AuthResponse<String>> register(@Valid @RequestBody RegisterRequest registerRequest) {
+        AuthResponse<String> response = authService.registerUser(registerRequest);
 
         if (response.isSuccess()) {
             return ResponseEntity.ok(response);

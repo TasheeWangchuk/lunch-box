@@ -17,7 +17,7 @@ import java.time.OffsetDateTime;
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "users",uniqueConstraints = {
+@Table(name = "users", uniqueConstraints = {
         @UniqueConstraint(columnNames = "username"),
         @UniqueConstraint(columnNames = "email")
 })
@@ -50,7 +50,7 @@ public class User {
     private String email;
 
     @Column(name = "role", nullable = false)
-    private AppRole role;
+    private AppRole role = AppRole.CUSTOMER;
 
     @NotNull
     @Column(name = "is_active", nullable = false)

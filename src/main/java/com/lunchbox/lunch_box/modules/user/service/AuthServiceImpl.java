@@ -7,8 +7,8 @@ import com.lunchbox.lunch_box.modules.user.entity.AppRole;
 import com.lunchbox.lunch_box.modules.user.entity.User;
 import com.lunchbox.lunch_box.modules.user.repository.UserRepository;
 import com.lunchbox.lunch_box.security.jwt.JwtUtils;
-import com.lunchbox.lunch_box.security.request.LoginRequest;
-import com.lunchbox.lunch_box.security.request.SignupRequest;
+import com.lunchbox.lunch_box.modules.user.dto.LoginRequest;
+import com.lunchbox.lunch_box.modules.user.dto.RegisterRequest;
 import com.lunchbox.lunch_box.security.services.UserDetailsImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,10 +42,10 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse<TokenData> authenticateUser(LoginRequest loginRequest) {
         try {
-            // Authenticate user
+            // Authenticate user using email
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
-                            loginRequest.getUsername(),
+                            loginRequest.getEmail(),
                             loginRequest.getPassword()));
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -65,35 +65,39 @@ public class AuthServiceImpl implements AuthService {
             return AuthResponse.success("Login successful", tokenData);
 
         } catch (Exception e) {
-            log.error("Authentication failed for user: {}", loginRequest.getUsername(), e);
-            return AuthResponse.error("Invalid username or password");
+            log.error("Authentication failed for user: {}", loginRequest.getEmail(), e);
+            return AuthResponse.error("Invalid email or password");
         }
     }
 
     @Override
-    public AuthResponse<String> registerUser(SignupRequest signupRequest) {
+    public AuthResponse<String> registerUser(RegisterRequest registerRequest) {
         try {
+            // Check if email already exists
+            if (userRepository.findByEmail(registerRequest.getEmail()).isPresent()) {
+                return AuthResponse.error("Email is already registered");
+            }
             // Check if username already exists
-            if (userRepository.findByUsername(signupRequest.getUsername()).isPresent()) {
+            if (userRepository.findByUsername(registerRequest.getUsername()).isPresent()) {
                 return AuthResponse.error("Username is already taken");
             }
 
             // Validate password confirmation
-            if (!signupRequest.getPassword().equals(signupRequest.getConfirmPassword())) {
+            if (!registerRequest.getPassword().equals(registerRequest.getConfirmPassword())) {
                 return AuthResponse.error("Passwords do not match");
             }
 
             // Create new user
             User user = new User();
-            user.setUsername(signupRequest.getUsername());
-            user.setEmail(signupRequest.getEmail());
-            user.setPassword(passwordEncoder.encode(signupRequest.getPassword()));
-            user.setPhone(signupRequest.getPhone());
+            user.setUsername(registerRequest.getUsername());
+            user.setEmail(registerRequest.getEmail());
+            user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+            user.setPhone(registerRequest.getPhone());
 
             // Set role based on request or default to CUSTOMER
-            if (signupRequest.getRole() != null && !signupRequest.getRole().isEmpty()) {
+            if (registerRequest.getRole() != null && !registerRequest.getRole().isEmpty()) {
                 try {
-                    user.setRole(AppRole.valueOf(signupRequest.getRole().toUpperCase()));
+                    user.setRole(AppRole.valueOf(registerRequest.getRole().toUpperCase()));
                 } catch (IllegalArgumentException e) {
                     user.setRole(AppRole.CUSTOMER);
                 }
@@ -104,12 +108,12 @@ public class AuthServiceImpl implements AuthService {
             user.setActive(true);
 
             userRepository.save(user);
-            log.info("User registered successfully: {}", user.getUsername());
+            log.info("User registered successfully: {}", user.getEmail());
 
             return AuthResponse.success("User registered successfully", "Registration complete");
 
         } catch (Exception e) {
-            log.error("Registration failed for user: {}", signupRequest.getUsername(), e);
+            log.error("Registration failed for user: {}", registerRequest.getEmail(), e);
             return AuthResponse.error("Registration failed: " + e.getMessage());
         }
     }
