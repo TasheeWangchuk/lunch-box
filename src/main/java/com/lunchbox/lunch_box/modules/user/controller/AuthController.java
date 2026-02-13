@@ -1,10 +1,6 @@
 package com.lunchbox.lunch_box.modules.user.controller;
 
-import com.lunchbox.lunch_box.modules.user.dto.AuthResponse;
-import com.lunchbox.lunch_box.modules.user.dto.LoginRequest;
-import com.lunchbox.lunch_box.modules.user.dto.RefreshTokenRequest;
-import com.lunchbox.lunch_box.modules.user.dto.RegisterRequest;
-import com.lunchbox.lunch_box.modules.user.dto.TokenData;
+import com.lunchbox.lunch_box.modules.user.dto.*;
 import com.lunchbox.lunch_box.modules.user.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,12 +8,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("api/v1/auth")
+@RequestMapping("/api/v1/auth")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class AuthController {
 
     @Autowired
     private AuthService authService;
+
+    @PostMapping("/google")
+    public ResponseEntity<AuthResponse<TokenData>> google(@Valid @RequestBody GoogleLoginRequest req) {
+        AuthResponse<TokenData> response = authService.authenticateWithGoogle(req);
+
+        if (response.isSuccess()) return ResponseEntity.ok(response);
+        return ResponseEntity.status(401).body(response);
+    }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse<TokenData>> login(@Valid @RequestBody LoginRequest loginRequest) {
