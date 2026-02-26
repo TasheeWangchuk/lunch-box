@@ -115,27 +115,47 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse<TokenData> authenticateUser(LoginRequest loginRequest) {
         try {
-            // Authenticate user using email
+            String email = loginRequest.getEmail().trim().toLowerCase();
+
+            Optional<User> userOpt = userRepository.findByEmail(email);
+            if (userOpt.isPresent()) {
+                User u = userOpt.get();
+
+                // Google account → block password login
+                if (u.getProvider() == AuthProvider.GOOGLE) {
+                    return AuthResponse.error(
+//                            "This email is linked to Google sign-in. Please continue with Google."
+                            "Please sign in with Google."
+                    );
+                    // If you support codes:
+                    // return AuthResponse.error("AUTH_PROVIDER_MISMATCH", "This email is linked to Google sign-in. Please continue with Google.", "GOOGLE");
+                }
+
+                // Safety: LOCAL but no password set
+                if (u.getProvider() == AuthProvider.LOCAL &&
+                        (u.getPassword() == null || u.getPassword().isBlank())) {
+                    return AuthResponse.error(
+                            "Password login isn’t enabled for this account. Please reset your password or use Google."
+                    );
+                }
+            }
+
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            loginRequest.getEmail(),
-                            loginRequest.getPassword()));
+                    new UsernamePasswordAuthenticationToken(email, loginRequest.getPassword())
+            );
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-            // Update last login timestamp
             User user = userRepository.findById(userDetails.getId())
                     .orElseThrow(() -> new RuntimeException("User not found"));
             user.setLastLoginAt(OffsetDateTime.now());
             userRepository.save(user);
 
-            // Generate tokens
             String accessToken = jwtUtils.generateAccessToken(userDetails);
             String refreshToken = jwtUtils.generateRefreshToken(userDetails);
 
-            TokenData tokenData = new TokenData(accessToken, refreshToken);
-            return AuthResponse.success("Login successful", tokenData);
+            return AuthResponse.success("Login successful", new TokenData(accessToken, refreshToken));
 
         } catch (Exception e) {
             log.error("Authentication failed for user: {}", loginRequest.getEmail(), e);
@@ -146,45 +166,44 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse<String> registerUser(RegisterRequest registerRequest) {
         try {
-            // Check if email already exists
-            if (userRepository.findByEmail(registerRequest.getEmail()).isPresent()) {
+            String email = registerRequest.getEmail().trim().toLowerCase();
+
+            Optional<User> existing = userRepository.findByEmail(email);
+            if (existing.isPresent()) {
+                User u = existing.get();
+
+                if (u.getProvider() == AuthProvider.GOOGLE) {
+                    return AuthResponse.error(
+                            "An account with this email already exists using Google. Please continue with Google sign-in."
+                    );
+                    // If you support codes:
+                    // return AuthResponse.error("EMAIL_EXISTS_GOOGLE", "...", "GOOGLE");
+                }
+
                 return AuthResponse.error("Email is already registered");
             }
-            // Check if username already exists
+
+            // username check stays same
             if (userRepository.findByUsername(registerRequest.getUsername()).isPresent()) {
                 return AuthResponse.error("Username is already taken");
             }
 
-            // Validate password confirmation
             if (!registerRequest.getPassword().equals(registerRequest.getConfirmPassword())) {
                 return AuthResponse.error("Passwords do not match");
             }
 
-            // Create new user
             User user = new User();
             user.setUsername(registerRequest.getUsername());
-            user.setEmail(registerRequest.getEmail());
+            user.setEmail(email);
             user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
             user.setPhone(registerRequest.getPhone());
             user.setProvider(AuthProvider.LOCAL);
             user.setProviderUserId(null);
             user.setEmailVerified(false);
-
-            // Set role based on request or default to CUSTOMER
-            if (registerRequest.getRole() != null && !registerRequest.getRole().isEmpty()) {
-                try {
-                    user.setRole(AppRole.valueOf(registerRequest.getRole().toUpperCase()));
-                } catch (IllegalArgumentException e) {
-                    user.setRole(AppRole.CUSTOMER);
-                }
-            } else {
-                user.setRole(AppRole.CUSTOMER);
-            }
-
+            user.setRole(AppRole.CUSTOMER);
             user.setActive(true);
 
             userRepository.save(user);
-            log.info("User registered successfully: {}", user.getEmail());
 
             return AuthResponse.success("User registered successfully", "Registration complete");
 
@@ -193,7 +212,6 @@ public class AuthServiceImpl implements AuthService {
             return AuthResponse.error("Registration failed: " + e.getMessage());
         }
     }
-
     @Override
     public AuthResponse<TokenData> refreshToken(RefreshTokenRequest refreshTokenRequest) {
         try {
