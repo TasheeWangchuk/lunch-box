@@ -50,6 +50,7 @@ public class JwtUtils {
         return Jwts.builder()
                 .subject(String.valueOf(userDetails.getId()))
                 .claim("userId", userDetails.getId())
+                .claim("username", userDetails.getUsername())
                 .claim("email", userDetails.getEmail())
                 .claim("role", userDetails.getUser().getRole().name())
                 .issuedAt(now)
