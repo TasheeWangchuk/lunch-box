@@ -13,15 +13,16 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.OffsetDateTime;
+import com.lunchbox.lunch_box.modules.restaurant.entity.Restaurant;
 
 @Data
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "users", uniqueConstraints = {
-                @UniqueConstraint(columnNames = "username"),
-                @UniqueConstraint(columnNames = "email"),
-                @UniqueConstraint(columnNames = { "provider", "provider_user_id" })
+        @UniqueConstraint(columnNames = "username"),
+        @UniqueConstraint(columnNames = "email"),
+        @UniqueConstraint(columnNames = { "provider", "provider_user_id" })
 })
 public class User {
         @Id
@@ -74,6 +75,10 @@ public class User {
         // ✅ NEW: useful for Google users
         @Column(name = "email_verified", nullable = false)
         private Boolean emailVerified = Boolean.FALSE;
+
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "restaurant_id")
+        private Restaurant restaurant;
 
         @CreationTimestamp
         @Column(name = "created_at", nullable = false, updatable = false)
