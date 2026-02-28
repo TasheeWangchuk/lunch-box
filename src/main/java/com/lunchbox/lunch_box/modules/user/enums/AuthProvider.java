@@ -1,4 +1,4 @@
-package com.lunchbox.lunch_box.modules.user.entity;
+package com.lunchbox.lunch_box.modules.user.enums;
 
 public enum AuthProvider {
     LOCAL,

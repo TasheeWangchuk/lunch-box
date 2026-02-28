@@ -1,4 +1,4 @@
-package com.lunchbox.lunch_box.modules.user.dto;
+package com.lunchbox.lunch_box.modules.auth.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -1,4 +1,4 @@
-package com.lunchbox.lunch_box.modules.user.dto;
+package com.lunchbox.lunch_box.modules.auth.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

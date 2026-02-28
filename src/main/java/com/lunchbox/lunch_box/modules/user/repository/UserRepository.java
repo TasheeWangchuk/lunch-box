@@ -1,6 +1,6 @@
 package com.lunchbox.lunch_box.modules.user.repository;
 
-import com.lunchbox.lunch_box.modules.user.entity.AuthProvider;
+import com.lunchbox.lunch_box.modules.user.enums.AuthProvider;
 import com.lunchbox.lunch_box.modules.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 

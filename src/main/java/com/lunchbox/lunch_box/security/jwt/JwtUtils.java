@@ -66,7 +66,6 @@ public class JwtUtils {
                 .parseSignedClaims(token)
                 .getPayload();
 
-        // Return the username from the user ID
         return claims.getSubject();
     }
 

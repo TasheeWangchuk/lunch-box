@@ -1,7 +1,12 @@
-package com.lunchbox.lunch_box.modules.user.controller;
+package com.lunchbox.lunch_box.modules.auth.controller;
 
-import com.lunchbox.lunch_box.modules.user.dto.*;
-import com.lunchbox.lunch_box.modules.user.service.AuthService;
+import com.lunchbox.lunch_box.modules.auth.dto.request.GoogleLoginRequest;
+import com.lunchbox.lunch_box.modules.auth.dto.request.LoginRequest;
+import com.lunchbox.lunch_box.modules.auth.dto.request.RefreshTokenRequest;
+import com.lunchbox.lunch_box.modules.auth.dto.request.RegisterRequest;
+import com.lunchbox.lunch_box.modules.auth.dto.response.AuthResponse;
+import com.lunchbox.lunch_box.modules.auth.dto.response.TokenData;
+import com.lunchbox.lunch_box.modules.auth.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

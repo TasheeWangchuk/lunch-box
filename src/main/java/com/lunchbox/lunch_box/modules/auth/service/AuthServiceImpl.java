@@ -1,8 +1,13 @@
-package com.lunchbox.lunch_box.modules.user.service;
+package com.lunchbox.lunch_box.modules.auth.service;
 
-import com.lunchbox.lunch_box.modules.user.dto.*;
-import com.lunchbox.lunch_box.modules.user.entity.AppRole;
-import com.lunchbox.lunch_box.modules.user.entity.AuthProvider;
+import com.lunchbox.lunch_box.modules.auth.dto.request.GoogleLoginRequest;
+import com.lunchbox.lunch_box.modules.auth.dto.request.LoginRequest;
+import com.lunchbox.lunch_box.modules.auth.dto.request.RefreshTokenRequest;
+import com.lunchbox.lunch_box.modules.auth.dto.request.RegisterRequest;
+import com.lunchbox.lunch_box.modules.auth.dto.response.AuthResponse;
+import com.lunchbox.lunch_box.modules.auth.dto.response.TokenData;
+import com.lunchbox.lunch_box.modules.user.enums.AppRole;
+import com.lunchbox.lunch_box.modules.user.enums.AuthProvider;
 import com.lunchbox.lunch_box.modules.user.entity.User;
 import com.lunchbox.lunch_box.modules.user.repository.UserRepository;
 import com.lunchbox.lunch_box.security.jwt.JwtUtils;
