@@ -1,5 +1,6 @@
 package com.lunchbox.lunch_box.modules.restaurant.entity;
 
+import com.lunchbox.lunch_box.modules.user.entity.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -40,4 +41,8 @@ public class Restaurant {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id")
+    private User owner;
 }

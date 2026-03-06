@@ -12,4 +12,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
 
     Optional<User> findByProviderAndProviderUserId(AuthProvider provider, String providerUserId);
+
+    java.util.List<User> findByRestaurantId(Long restaurantId);
+
+    java.util.List<User> findByRestaurantIdAndRole(Long restaurantId,
+            com.lunchbox.lunch_box.modules.user.enums.AppRole role);
 }

@@ -1,6 +1,8 @@
 package com.lunchbox.lunch_box.security.jwt;
 
 import com.lunchbox.lunch_box.security.services.UserDetailsServiceImpl;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,6 +19,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 public class AuthTokenFilter extends OncePerRequestFilter {
+
     @Autowired
     private JwtUtils jwtUtils;
 
@@ -26,53 +29,86 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     private static final Logger logger = LoggerFactory.getLogger(AuthTokenFilter.class);
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
+
         logger.debug("=== AuthTokenFilter called for URI: {} ===", request.getRequestURI());
 
         try {
             String jwt = parseJwt(request);
-            logger.info("JWT extracted: {}", jwt != null ? "YES (length: " + jwt.length() + ")" : "NO");
 
-            if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
-                logger.debug("JWT token is valid");
+            if (jwt != null) {
+                logger.debug("JWT found, validating token...");
+
+                // validate token (throws exception if invalid/expired)
+                jwtUtils.validateJwtToken(jwt);
+
                 String subject = jwtUtils.getUserNameFromJwtToken(jwt);
-                logger.debug("Subject (ID) from token: {}", subject);
-
                 Long userId = Long.parseLong(subject);
+
+                logger.debug("User ID from token: {}", userId);
+
                 UserDetails userDetails = userDetailsService.loadUserById(userId);
-                logger.info("UserDetails loaded by ID - Authorities: {}", userDetails.getAuthorities());
 
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities());
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails,
+                                null,
+                                userDetails.getAuthorities()
+                        );
 
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                authentication.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request)
+                );
+
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+
                 logger.debug("Authentication set in SecurityContext");
+
             } else {
-                logger.warn("JWT validation failed or JWT is null");
+                logger.debug("No JWT token found in request");
             }
+
+        } catch (ExpiredJwtException e) {
+
+            logger.error("JWT token expired: {}", e.getMessage());
+            request.setAttribute("token_error", "TokenExpired");
+
+        } catch (JwtException e) {
+
+            logger.error("Invalid JWT token: {}", e.getMessage());
+            request.setAttribute("token_error", "InvalidToken");
+
         } catch (Exception e) {
+
             logger.error("Cannot set user authentication: {}", e.getMessage(), e);
+            request.setAttribute("token_error", "InvalidToken");
         }
-        logger.info("=== AuthTokenFilter END - Calling next filter ===");
+
+        logger.debug("=== AuthTokenFilter END - calling next filter ===");
+
         filterChain.doFilter(request, response);
     }
 
     private String parseJwt(HttpServletRequest request) {
-        logger.info("Parsing JWT from request...");
+
+        logger.debug("Parsing JWT from request");
+
         String jwtFromCookie = jwtUtils.getJwtFromCookie(request);
-        logger.info("JWT from cookie: {}", jwtFromCookie != null ? "FOUND" : "NOT FOUND");
         if (jwtFromCookie != null) {
+            logger.debug("JWT found in cookie");
             return jwtFromCookie;
         }
+
         String jwtFromHeader = jwtUtils.getJwtFromHeader(request);
-        logger.info("JWT from header: {}", jwtFromHeader != null ? "FOUND" : "NOT FOUND");
         if (jwtFromHeader != null) {
+            logger.debug("JWT found in header");
             return jwtFromHeader;
         }
+
+        logger.debug("JWT not found in cookie or header");
+
         return null;
     }
 }

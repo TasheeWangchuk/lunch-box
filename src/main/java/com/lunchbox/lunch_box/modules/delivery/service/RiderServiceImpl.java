@@ -2,6 +2,8 @@ package com.lunchbox.lunch_box.modules.delivery.service;
 
 import com.lunchbox.lunch_box.modules.delivery.dto.request.CreateRiderRequest;
 import com.lunchbox.lunch_box.modules.delivery.dto.response.RiderResponse;
+import com.lunchbox.lunch_box.common.exception.ConflictException;
+import com.lunchbox.lunch_box.common.exception.ResourceNotFoundException;
 import com.lunchbox.lunch_box.modules.user.entity.User;
 import com.lunchbox.lunch_box.modules.user.enums.AppRole;
 import com.lunchbox.lunch_box.modules.user.enums.AuthProvider;
@@ -25,10 +27,10 @@ public class RiderServiceImpl implements RiderService {
     @Transactional
     public RiderResponse createRider(CreateRiderRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("Email is already registered");
+            throw new ConflictException("Email is already registered");
         }
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-            throw new RuntimeException("Username is already taken");
+            throw new ConflictException("Username is already taken");
         }
 
         User rider = new User();
@@ -48,10 +50,10 @@ public class RiderServiceImpl implements RiderService {
     @Override
     public RiderResponse getRiderById(Long id) {
         User rider = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Rider not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Rider not found"));
 
         if (rider.getRole() != AppRole.RIDER) {
-            throw new RuntimeException("User is not a rider");
+            throw new ResourceNotFoundException("User is not a rider");
         }
 
         return mapToResponse(rider);
@@ -68,7 +70,7 @@ public class RiderServiceImpl implements RiderService {
     @Override
     public void deleteRider(Long id) {
         User rider = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Rider not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Rider not found"));
         if (rider.getRole() == AppRole.RIDER) {
             userRepository.deleteById(id);
         }

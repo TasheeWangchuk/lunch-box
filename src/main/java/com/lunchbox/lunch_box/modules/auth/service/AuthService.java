@@ -4,15 +4,15 @@ import com.lunchbox.lunch_box.modules.auth.dto.request.GoogleLoginRequest;
 import com.lunchbox.lunch_box.modules.auth.dto.request.LoginRequest;
 import com.lunchbox.lunch_box.modules.auth.dto.request.RefreshTokenRequest;
 import com.lunchbox.lunch_box.modules.auth.dto.request.RegisterRequest;
-import com.lunchbox.lunch_box.modules.auth.dto.response.AuthResponse;
+import com.lunchbox.lunch_box.common.dto.response.ApiResponse;
 import com.lunchbox.lunch_box.modules.auth.dto.response.TokenData;
 
 public interface AuthService {
-    AuthResponse<TokenData> authenticateWithGoogle(GoogleLoginRequest googleLoginRequest);
+    ApiResponse<TokenData> authenticateWithGoogle(GoogleLoginRequest googleLoginRequest);
 
-    AuthResponse<TokenData> authenticateUser(LoginRequest loginRequest);
+    ApiResponse<TokenData> authenticateUser(LoginRequest loginRequest);
 
-    AuthResponse<String> registerUser(RegisterRequest registerRequest);
+    ApiResponse<String> registerUser(RegisterRequest registerRequest);
 
-    AuthResponse<TokenData> refreshToken(RefreshTokenRequest refreshTokenRequest);
+    ApiResponse<TokenData> refreshToken(RefreshTokenRequest refreshTokenRequest);
 }

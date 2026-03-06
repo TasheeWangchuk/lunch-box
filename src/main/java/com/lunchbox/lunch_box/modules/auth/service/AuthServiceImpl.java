@@ -4,8 +4,12 @@ import com.lunchbox.lunch_box.modules.auth.dto.request.GoogleLoginRequest;
 import com.lunchbox.lunch_box.modules.auth.dto.request.LoginRequest;
 import com.lunchbox.lunch_box.modules.auth.dto.request.RefreshTokenRequest;
 import com.lunchbox.lunch_box.modules.auth.dto.request.RegisterRequest;
-import com.lunchbox.lunch_box.modules.auth.dto.response.AuthResponse;
+import com.lunchbox.lunch_box.common.dto.response.ApiResponse;
 import com.lunchbox.lunch_box.modules.auth.dto.response.TokenData;
+import com.lunchbox.lunch_box.common.exception.BadRequestException;
+import com.lunchbox.lunch_box.common.exception.ConflictException;
+import com.lunchbox.lunch_box.common.exception.ResourceNotFoundException;
+import com.lunchbox.lunch_box.common.exception.UnauthorizedException;
 import com.lunchbox.lunch_box.modules.user.enums.AppRole;
 import com.lunchbox.lunch_box.modules.user.enums.AuthProvider;
 import com.lunchbox.lunch_box.modules.user.entity.User;
@@ -40,7 +44,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtDecoder googleJwtDecoder;
 
     @Override
-    public AuthResponse<TokenData> authenticateWithGoogle(GoogleLoginRequest req) {
+    public ApiResponse<TokenData> authenticateWithGoogle(GoogleLoginRequest req) {
         try {
             Jwt googleJwt = googleJwtDecoder.decode(req.idToken());
 
@@ -51,7 +55,7 @@ public class AuthServiceImpl implements AuthService {
             String picture = googleJwt.getClaimAsString("picture");
 
             if (googleSub == null || googleSub.isBlank()) {
-                return AuthResponse.error("Invalid Google token (missing sub).");
+                throw new UnauthorizedException("Invalid Google token (missing sub).");
             }
 
             // 1) Find by provider+sub (best)
@@ -109,16 +113,16 @@ public class AuthServiceImpl implements AuthService {
 
             TokenData tokenData = new TokenData(accessToken, refreshToken);
 
-            return AuthResponse.success("Google login successful", tokenData);
+            return ApiResponse.success(200, "Google login successful", tokenData);
 
         } catch (Exception e) {
             log.error("Google authentication failed", e);
-            return AuthResponse.error("Google authentication failed (invalid token).");
+            throw new UnauthorizedException("Google authentication failed (invalid token).");
         }
     }
 
     @Override
-    public AuthResponse<TokenData> authenticateUser(LoginRequest loginRequest) {
+    public ApiResponse<TokenData> authenticateUser(LoginRequest loginRequest) {
         try {
             String email = loginRequest.getEmail().trim().toLowerCase();
 
@@ -128,48 +132,40 @@ public class AuthServiceImpl implements AuthService {
 
                 // Google account → block password login
                 if (u.getProvider() == AuthProvider.GOOGLE) {
-                    return AuthResponse.error(
-//                            "This email is linked to Google sign-in. Please continue with Google."
-                            "Please sign in with Google."
-                    );
-                    // If you support codes:
-                    // return AuthResponse.error("AUTH_PROVIDER_MISMATCH", "This email is linked to Google sign-in. Please continue with Google.", "GOOGLE");
+                    throw new ConflictException("Please sign in with Google.");
                 }
 
-                // Safety: LOCAL but no password set
                 if (u.getProvider() == AuthProvider.LOCAL &&
                         (u.getPassword() == null || u.getPassword().isBlank())) {
-                    return AuthResponse.error(
-                            "Password login isn’t enabled for this account. Please reset your password or use Google."
-                    );
+                    throw new ConflictException(
+                            "Password login isn’t enabled for this account. Please reset your password or use Google.");
                 }
             }
 
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(email, loginRequest.getPassword())
-            );
+                    new UsernamePasswordAuthenticationToken(email, loginRequest.getPassword()));
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
             User user = userRepository.findById(userDetails.getId())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
             user.setLastLoginAt(OffsetDateTime.now());
             userRepository.save(user);
 
             String accessToken = jwtUtils.generateAccessToken(userDetails);
             String refreshToken = jwtUtils.generateRefreshToken(userDetails);
 
-            return AuthResponse.success("Login successful", new TokenData(accessToken, refreshToken));
+            return ApiResponse.success(200, "Login successful", new TokenData(accessToken, refreshToken));
 
         } catch (Exception e) {
             log.error("Authentication failed for user: {}", loginRequest.getEmail(), e);
-            return AuthResponse.error("Invalid email or password");
+            throw new UnauthorizedException("Invalid email or password");
         }
     }
 
     @Override
-    public AuthResponse<String> registerUser(RegisterRequest registerRequest) {
+    public ApiResponse<String> registerUser(RegisterRequest registerRequest) {
         try {
             String email = registerRequest.getEmail().trim().toLowerCase();
 
@@ -178,23 +174,18 @@ public class AuthServiceImpl implements AuthService {
                 User u = existing.get();
 
                 if (u.getProvider() == AuthProvider.GOOGLE) {
-                    return AuthResponse.error(
-                            "An account with this email already exists using Google. Please continue with Google sign-in."
-                    );
-                    // If you support codes:
-                    // return AuthResponse.error("EMAIL_EXISTS_GOOGLE", "...", "GOOGLE");
+                    throw new ConflictException(
+                            "An account with this email already exists using Google. Please continue with Google sign-in.");
                 }
-
-                return AuthResponse.error("Email is already registered");
+                throw new ConflictException("Email is already registered");
             }
 
-            // username check stays same
             if (userRepository.findByUsername(registerRequest.getUsername()).isPresent()) {
-                return AuthResponse.error("Username is already taken");
+                throw new ConflictException("Username is already taken");
             }
 
             if (!registerRequest.getPassword().equals(registerRequest.getConfirmPassword())) {
-                return AuthResponse.error("Passwords do not match");
+                throw new BadRequestException("Passwords do not match");
             }
 
             User user = new User();
@@ -210,45 +201,39 @@ public class AuthServiceImpl implements AuthService {
 
             userRepository.save(user);
 
-            return AuthResponse.success("User registered successfully", "Registration complete");
+            return ApiResponse.success(200, "User registered successfully", "Registration complete");
 
         } catch (Exception e) {
             log.error("Registration failed for user: {}", registerRequest.getEmail(), e);
-            return AuthResponse.error("Registration failed: " + e.getMessage());
+            throw new RuntimeException("Registration failed: " + e.getMessage());
         }
     }
+
     @Override
-    public AuthResponse<TokenData> refreshToken(RefreshTokenRequest refreshTokenRequest) {
-        try {
-            String refreshToken = refreshTokenRequest.getRefreshToken();
+    public ApiResponse<TokenData> refreshToken(RefreshTokenRequest refreshTokenRequest) {
+        String refreshToken = refreshTokenRequest.getRefreshToken();
 
-            // Validate refresh token
-            if (!jwtUtils.validateJwtToken(refreshToken)) {
-                return AuthResponse.error("Invalid or expired refresh token");
-            }
-
-            // Get user ID from token
-            Long userId = jwtUtils.getUserIdFromJwtToken(refreshToken);
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-
-            // Check if user is still active
-            if (!user.getActive()) {
-                return AuthResponse.error("User account is deactivated");
-            }
-
-            // Build UserDetails and generate new tokens
-            UserDetailsImpl userDetails = UserDetailsImpl.build(user);
-            String newAccessToken = jwtUtils.generateAccessToken(userDetails);
-            String newRefreshToken = jwtUtils.generateRefreshToken(userDetails);
-
-            TokenData tokenData = new TokenData(newAccessToken, newRefreshToken);
-            return AuthResponse.success("Token refreshed successfully", tokenData);
-
-        } catch (Exception e) {
-            log.error("Token refresh failed", e);
-            return AuthResponse.error("Failed to refresh token: " + e.getMessage());
+        if (!jwtUtils.validateJwtToken(refreshToken)) {
+            throw new UnauthorizedException("Invalid or expired refresh token");
         }
+
+        // jwtUtils.getUserIdFromJwtToken will throw ExpiredJwtException or similar if
+        // invalid
+        Long userId = jwtUtils.getUserIdFromJwtToken(refreshToken);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (!user.getActive()) {
+            throw new UnauthorizedException("User account is deactivated");
+        }
+
+        // Build UserDetails and generate new tokens
+        UserDetailsImpl userDetails = UserDetailsImpl.build(user);
+        String newAccessToken = jwtUtils.generateAccessToken(userDetails);
+        String newRefreshToken = jwtUtils.generateRefreshToken(userDetails);
+
+        TokenData tokenData = new TokenData(newAccessToken, newRefreshToken);
+        return ApiResponse.success(200, "Token refreshed successfully", tokenData);
     }
 
     private String makeUsername(String name, String email) {
