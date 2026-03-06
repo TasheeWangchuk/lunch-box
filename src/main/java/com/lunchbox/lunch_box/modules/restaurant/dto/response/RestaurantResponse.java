@@ -12,5 +12,7 @@ public class RestaurantResponse {
     private String address;
     private String contactNumber;
     private Boolean active;
+    private Long ownerId;
+    private String ownerName;
     private OffsetDateTime createdAt;
 }

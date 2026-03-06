@@ -2,6 +2,7 @@ package com.lunchbox.lunch_box.modules.user.service;
 
 import com.lunchbox.lunch_box.modules.user.dto.request.UpdateUserRequest;
 import com.lunchbox.lunch_box.modules.user.dto.response.UserResponse;
+import com.lunchbox.lunch_box.common.exception.ResourceNotFoundException;
 import com.lunchbox.lunch_box.modules.user.entity.User;
 import com.lunchbox.lunch_box.modules.user.mapper.UserMapper;
 import com.lunchbox.lunch_box.modules.user.repository.UserRepository;
@@ -26,7 +27,7 @@ public class UserServiceImpl implements UserService {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
                 .getPrincipal();
         User user = userRepository.findById(userDetails.getId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return userMapper.toResponse(user);
     }
 
@@ -36,7 +37,7 @@ public class UserServiceImpl implements UserService {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
                 .getPrincipal();
         User user = userRepository.findById(userDetails.getId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (request.getUsername() != null) {
             user.setUsername(request.getUsername());
@@ -54,7 +55,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponse getUserById(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return userMapper.toResponse(user);
     }
 
@@ -69,7 +70,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void deleteUser(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         userRepository.delete(user);
     }
 }

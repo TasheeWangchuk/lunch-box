@@ -2,13 +2,18 @@ package com.lunchbox.lunch_box.modules.restaurant.service;
 
 import com.lunchbox.lunch_box.modules.restaurant.dto.request.CreateStaffRequest;
 import com.lunchbox.lunch_box.modules.restaurant.dto.response.StaffResponse;
+import com.lunchbox.lunch_box.common.exception.ConflictException;
+import com.lunchbox.lunch_box.common.exception.ResourceNotFoundException;
+import com.lunchbox.lunch_box.common.exception.UnauthorizedException;
 import com.lunchbox.lunch_box.modules.restaurant.entity.Restaurant;
 import com.lunchbox.lunch_box.modules.restaurant.repository.RestaurantRepository;
 import com.lunchbox.lunch_box.modules.user.entity.User;
 import com.lunchbox.lunch_box.modules.user.enums.AppRole;
 import com.lunchbox.lunch_box.modules.user.enums.AuthProvider;
 import com.lunchbox.lunch_box.modules.user.repository.UserRepository;
+import com.lunchbox.lunch_box.security.services.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,14 +33,22 @@ public class StaffServiceImpl implements StaffService {
     @Transactional
     public StaffResponse createStaff(CreateStaffRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("Email is already registered");
+            throw new ConflictException("Email is already registered");
         }
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-            throw new RuntimeException("Username is already taken");
+            throw new ConflictException("Username is already taken");
         }
 
         Restaurant restaurant = restaurantRepository.findById(request.getRestaurantId())
-                .orElseThrow(() -> new RuntimeException("Restaurant not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Restaurant not found"));
+
+        // Big Tech Style: Audit/Permission Check
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
+                .getPrincipal();
+
+        if (restaurant.getOwner() == null || !restaurant.getOwner().getId().equals(userDetails.getId())) {
+            throw new UnauthorizedException("You are not authorized to add staff to this restaurant");
+        }
 
         User staff = new User();
         staff.setUsername(request.getUsername());
@@ -55,10 +68,10 @@ public class StaffServiceImpl implements StaffService {
     @Override
     public StaffResponse getStaffById(Long id) {
         User staff = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Staff not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Staff not found"));
 
         if (staff.getRole() != AppRole.STAFF) {
-            throw new RuntimeException("User is not a staff member");
+            throw new ResourceNotFoundException("User is not a staff member");
         }
 
         return mapToResponse(staff);
@@ -66,19 +79,38 @@ public class StaffServiceImpl implements StaffService {
 
     @Override
     public List<StaffResponse> getStaffByRestaurant(Long restaurantId) {
-        return userRepository.findAll().stream()
-                .filter(u -> u.getRole() == AppRole.STAFF)
-                .filter(u -> u.getRestaurant() != null && u.getRestaurant().getId().equals(restaurantId))
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new ResourceNotFoundException("Restaurant not found"));
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
+                .getPrincipal();
+
+        if (restaurant.getOwner() == null || !restaurant.getOwner().getId().equals(userDetails.getId())) {
+            throw new UnauthorizedException("You are not authorized to view staff for this restaurant");
+        }
+
+        return userRepository.findByRestaurantIdAndRole(restaurantId, AppRole.STAFF).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
     public void deleteStaff(Long id) {
-        User staff = userRepository.findById(id).orElseThrow(() -> new RuntimeException("Staff not found"));
-        if (staff.getRole() == AppRole.STAFF) {
-            userRepository.deleteById(id);
+        User staff = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Staff not found"));
+        if (staff.getRole() != AppRole.STAFF) {
+            throw new ResourceNotFoundException("User is not a staff member");
         }
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
+                .getPrincipal();
+
+        Restaurant restaurant = staff.getRestaurant();
+        if (restaurant == null || restaurant.getOwner() == null
+                || !restaurant.getOwner().getId().equals(userDetails.getId())) {
+            throw new UnauthorizedException("You are not authorized to delete staff from this restaurant");
+        }
+
+        userRepository.deleteById(id);
     }
 
     private StaffResponse mapToResponse(User user) {

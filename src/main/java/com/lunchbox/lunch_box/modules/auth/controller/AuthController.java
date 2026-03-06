@@ -4,7 +4,7 @@ import com.lunchbox.lunch_box.modules.auth.dto.request.GoogleLoginRequest;
 import com.lunchbox.lunch_box.modules.auth.dto.request.LoginRequest;
 import com.lunchbox.lunch_box.modules.auth.dto.request.RefreshTokenRequest;
 import com.lunchbox.lunch_box.modules.auth.dto.request.RegisterRequest;
-import com.lunchbox.lunch_box.modules.auth.dto.response.AuthResponse;
+import com.lunchbox.lunch_box.common.dto.response.ApiResponse;
 import com.lunchbox.lunch_box.modules.auth.dto.response.TokenData;
 import com.lunchbox.lunch_box.modules.auth.service.AuthService;
 import jakarta.validation.Valid;
@@ -21,44 +21,27 @@ public class AuthController {
     private AuthService authService;
 
     @PostMapping("/google")
-    public ResponseEntity<AuthResponse<TokenData>> google(@Valid @RequestBody GoogleLoginRequest req) {
-        AuthResponse<TokenData> response = authService.authenticateWithGoogle(req);
-
-        if (response.isSuccess()) return ResponseEntity.ok(response);
-        return ResponseEntity.status(401).body(response);
+    public ResponseEntity<ApiResponse<TokenData>> google(@Valid @RequestBody GoogleLoginRequest req) {
+        ApiResponse<TokenData> response = authService.authenticateWithGoogle(req);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse<TokenData>> login(@Valid @RequestBody LoginRequest loginRequest) {
-        AuthResponse<TokenData> response = authService.authenticateUser(loginRequest);
-
-        if (response.isSuccess()) {
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.status(401).body(response);
-        }
+    public ResponseEntity<ApiResponse<TokenData>> login(@Valid @RequestBody LoginRequest loginRequest) {
+        ApiResponse<TokenData> response = authService.authenticateUser(loginRequest);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse<String>> register(@Valid @RequestBody RegisterRequest registerRequest) {
-        AuthResponse<String> response = authService.registerUser(registerRequest);
-
-        if (response.isSuccess()) {
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.badRequest().body(response);
-        }
+    public ResponseEntity<ApiResponse<String>> register(@Valid @RequestBody RegisterRequest registerRequest) {
+        ApiResponse<String> response = authService.registerUser(registerRequest);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse<TokenData>> refreshToken(
+    public ResponseEntity<ApiResponse<TokenData>> refreshToken(
             @Valid @RequestBody RefreshTokenRequest refreshTokenRequest) {
-        AuthResponse<TokenData> response = authService.refreshToken(refreshTokenRequest);
-
-        if (response.isSuccess()) {
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.status(401).body(response);
-        }
+        ApiResponse<TokenData> response = authService.refreshToken(refreshTokenRequest);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 }

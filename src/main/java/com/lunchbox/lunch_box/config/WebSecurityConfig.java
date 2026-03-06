@@ -1,7 +1,7 @@
 package com.lunchbox.lunch_box.config;
 
-import com.lunchbox.lunch_box.security.jwt.AuthEntryPointJwt;
 import com.lunchbox.lunch_box.security.jwt.AuthTokenFilter;
+import com.lunchbox.lunch_box.security.jwt.CustomAuthenticationEntryPoint;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,7 +23,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class WebSecurityConfig {
 
     @Autowired
-    private AuthEntryPointJwt unauthorizedHandler;
+    private CustomAuthenticationEntryPoint authenticationEntryPoint;
 
     @Bean
     public AuthTokenFilter authenticationJwtTokenFilter() {
@@ -43,7 +43,7 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
-                .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(authenticationEntryPoint))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth.requestMatchers(
                    "/api/public/**",
