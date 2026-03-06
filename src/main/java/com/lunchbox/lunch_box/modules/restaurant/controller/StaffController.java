@@ -1,5 +1,6 @@
 package com.lunchbox.lunch_box.modules.restaurant.controller;
 
+import com.lunchbox.lunch_box.common.dto.response.ApiResponse;
 import com.lunchbox.lunch_box.modules.restaurant.dto.request.CreateStaffRequest;
 import com.lunchbox.lunch_box.modules.restaurant.dto.response.StaffResponse;
 import com.lunchbox.lunch_box.modules.restaurant.service.StaffService;
@@ -22,26 +23,32 @@ public class StaffController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<StaffResponse> createStaff(@Valid @RequestBody CreateStaffRequest request) {
-        return new ResponseEntity<>(staffService.createStaff(request), HttpStatus.CREATED);
+    public ResponseEntity<ApiResponse<StaffResponse>> createStaff(@Valid @RequestBody CreateStaffRequest request) {
+        StaffResponse staff = staffService.createStaff(request);
+        return new ResponseEntity<>(
+                ApiResponse.success(HttpStatus.CREATED.value(), "Staff created successfully", staff),
+                HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
-    public ResponseEntity<StaffResponse> getStaffById(@PathVariable Long id) {
-        return ResponseEntity.ok(staffService.getStaffById(id));
+    public ResponseEntity<ApiResponse<StaffResponse>> getStaffById(@PathVariable Long id) {
+        StaffResponse staff = staffService.getStaffById(id);
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK.value(), "Staff retrieved successfully", staff));
     }
 
     @GetMapping("/restaurant/{restaurantId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<StaffResponse>> getStaffByRestaurant(@PathVariable Long restaurantId) {
-        return ResponseEntity.ok(staffService.getStaffByRestaurant(restaurantId));
+    public ResponseEntity<ApiResponse<List<StaffResponse>>> getStaffByRestaurant(@PathVariable Long restaurantId) {
+        List<StaffResponse> staffList = staffService.getStaffByRestaurant(restaurantId);
+        return ResponseEntity
+                .ok(ApiResponse.success(HttpStatus.OK.value(), "Staff members retrieved successfully", staffList));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteStaff(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteStaff(@PathVariable Long id) {
         staffService.deleteStaff(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK.value(), "Staff deleted successfully", null));
     }
 }

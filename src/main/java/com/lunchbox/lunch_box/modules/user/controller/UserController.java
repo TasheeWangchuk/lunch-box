@@ -1,10 +1,12 @@
 package com.lunchbox.lunch_box.modules.user.controller;
 
+import com.lunchbox.lunch_box.common.dto.response.ApiResponse;
 import com.lunchbox.lunch_box.modules.user.dto.request.UpdateUserRequest;
 import com.lunchbox.lunch_box.modules.user.dto.response.UserResponse;
 import com.lunchbox.lunch_box.modules.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -21,32 +23,37 @@ public class UserController {
 
     @GetMapping("/me")
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN', 'STAFF', 'RIDER')")
-    public ResponseEntity<UserResponse> getCurrentUser() {
-        return ResponseEntity.ok(userService.getCurrentUserProfile());
+    public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser() {
+        UserResponse user = userService.getCurrentUserProfile();
+        return ResponseEntity
+                .ok(ApiResponse.success(HttpStatus.OK.value(), "User profile retrieved successfully", user));
     }
 
     @PutMapping("/me")
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN', 'STAFF', 'RIDER')")
-    public ResponseEntity<UserResponse> updateCurrentUser(@Valid @RequestBody UpdateUserRequest request) {
-        return ResponseEntity.ok(userService.updateUserProfile(request));
+    public ResponseEntity<ApiResponse<UserResponse>> updateCurrentUser(@Valid @RequestBody UpdateUserRequest request) {
+        UserResponse user = userService.updateUserProfile(request);
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK.value(), "User profile updated successfully", user));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
-        return ResponseEntity.ok(userService.getUserById(id));
+    public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable Long id) {
+        UserResponse user = userService.getUserById(id);
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK.value(), "User retrieved successfully", user));
     }
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserResponse>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers() {
+        List<UserResponse> users = userService.getAllUsers();
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK.value(), "All users retrieved successfully", users));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK.value(), "User deleted successfully", null));
     }
 }
