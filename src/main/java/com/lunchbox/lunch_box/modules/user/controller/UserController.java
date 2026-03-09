@@ -22,7 +22,6 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/me")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN', 'STAFF', 'RIDER')")
     public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser() {
         UserResponse user = userService.getCurrentUserProfile();
         return ResponseEntity
@@ -30,7 +29,6 @@ public class UserController {
     }
 
     @PutMapping("/me")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN', 'STAFF', 'RIDER')")
     public ResponseEntity<ApiResponse<UserResponse>> updateCurrentUser(@Valid @RequestBody UpdateUserRequest request) {
         UserResponse user = userService.updateUserProfile(request);
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK.value(), "User profile updated successfully", user));
