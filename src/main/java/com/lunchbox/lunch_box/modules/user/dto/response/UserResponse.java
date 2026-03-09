@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.OffsetDateTime;
+import java.util.Set;
 
 @Data
 @Builder
@@ -15,7 +16,7 @@ public class UserResponse {
     private String email;
     private String avatarUrl;
     private String phone;
-    private AppRole role;
+    private Set<AppRole> roles;
     private Boolean active;
     private AuthProvider provider;
     private Boolean emailVerified;

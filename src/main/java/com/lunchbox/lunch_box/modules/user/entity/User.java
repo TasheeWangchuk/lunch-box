@@ -13,16 +13,17 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.OffsetDateTime;
-import com.lunchbox.lunch_box.modules.restaurant.entity.Restaurant;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "users", uniqueConstraints = {
-        @UniqueConstraint(columnNames = "username"),
-        @UniqueConstraint(columnNames = "email"),
-        @UniqueConstraint(columnNames = { "provider", "provider_user_id" })
+                @UniqueConstraint(columnNames = "username"),
+                @UniqueConstraint(columnNames = "email"),
+                @UniqueConstraint(columnNames = { "provider", "provider_user_id" })
 })
 public class User {
         @Id
@@ -53,10 +54,9 @@ public class User {
         @Column(name = "email", length = 180, unique = true)
         private String email;
 
-        @NotNull
-        @Enumerated(EnumType.STRING)
-        @Column(name = "role", nullable = false, length = 30)
-        private AppRole role = AppRole.CUSTOMER;
+        @ManyToMany(fetch = FetchType.EAGER)
+        @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
+        private Set<Role> roles = new HashSet<>();
 
         @NotNull
         @Column(name = "is_active", nullable = false)
@@ -75,10 +75,6 @@ public class User {
         // ✅ NEW: useful for Google users
         @Column(name = "email_verified", nullable = false)
         private Boolean emailVerified = Boolean.FALSE;
-
-        @ManyToOne(fetch = FetchType.LAZY)
-        @JoinColumn(name = "restaurant_id")
-        private Restaurant restaurant;
 
         @CreationTimestamp
         @Column(name = "created_at", nullable = false, updatable = false)

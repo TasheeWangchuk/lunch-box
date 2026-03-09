@@ -6,10 +6,14 @@ import com.lunchbox.lunch_box.common.exception.ConflictException;
 import com.lunchbox.lunch_box.common.exception.ResourceNotFoundException;
 import com.lunchbox.lunch_box.common.exception.UnauthorizedException;
 import com.lunchbox.lunch_box.modules.restaurant.entity.Restaurant;
+import com.lunchbox.lunch_box.modules.restaurant.entity.RestaurantUser;
 import com.lunchbox.lunch_box.modules.restaurant.repository.RestaurantRepository;
+import com.lunchbox.lunch_box.modules.restaurant.repository.RestaurantUserRepository;
+import com.lunchbox.lunch_box.modules.user.entity.Role;
 import com.lunchbox.lunch_box.modules.user.entity.User;
 import com.lunchbox.lunch_box.modules.user.enums.AppRole;
 import com.lunchbox.lunch_box.modules.user.enums.AuthProvider;
+import com.lunchbox.lunch_box.modules.user.repository.RoleRepository;
 import com.lunchbox.lunch_box.modules.user.repository.UserRepository;
 import com.lunchbox.lunch_box.security.services.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +31,8 @@ public class StaffServiceImpl implements StaffService {
 
     private final UserRepository userRepository;
     private final RestaurantRepository restaurantRepository;
+    private final RestaurantUserRepository restaurantUserRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -42,7 +48,6 @@ public class StaffServiceImpl implements StaffService {
         Restaurant restaurant = restaurantRepository.findById(request.getRestaurantId())
                 .orElseThrow(() -> new ResourceNotFoundException("Restaurant not found"));
 
-        // Big Tech Style: Audit/Permission Check
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
                 .getPrincipal();
 
@@ -55,14 +60,22 @@ public class StaffServiceImpl implements StaffService {
         staff.setEmail(request.getEmail());
         staff.setPassword(passwordEncoder.encode(request.getPassword()));
         staff.setPhone(request.getPhone());
-        staff.setRole(AppRole.STAFF);
+        Role staffRole = roleRepository.findByName(AppRole.STAFF)
+                .orElseGet(() -> roleRepository.save(new Role(AppRole.STAFF)));
+        staff.getRoles().add(staffRole);
         staff.setProvider(AuthProvider.LOCAL);
         staff.setActive(true);
-        staff.setRestaurant(restaurant);
         staff.setEmailVerified(false);
-
         User saved = userRepository.save(staff);
-        return mapToResponse(saved);
+
+        RestaurantUser restaurantUser = new RestaurantUser();
+        restaurantUser.setRestaurant(restaurant);
+        restaurantUser.setUser(saved);
+        restaurantUser.setRole(AppRole.STAFF);
+        restaurantUser.setActive(true);
+        restaurantUserRepository.save(restaurantUser);
+
+        return mapToResponse(saved, restaurant);
     }
 
     @Override
@@ -70,11 +83,16 @@ public class StaffServiceImpl implements StaffService {
         User staff = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Staff not found"));
 
-        if (staff.getRole() != AppRole.STAFF) {
+        boolean isStaff = staff.getRoles().stream().anyMatch(r -> r.getName() == AppRole.STAFF);
+        if (!isStaff) {
             throw new ResourceNotFoundException("User is not a staff member");
         }
 
-        return mapToResponse(staff);
+        RestaurantUser mapping = restaurantUserRepository.findByUserId(staff.getId()).stream()
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Staff mapping not found"));
+
+        return mapToResponse(staff, mapping.getRestaurant());
     }
 
     @Override
@@ -89,39 +107,45 @@ public class StaffServiceImpl implements StaffService {
             throw new UnauthorizedException("You are not authorized to view staff for this restaurant");
         }
 
-        return userRepository.findByRestaurantIdAndRole(restaurantId, AppRole.STAFF).stream()
-                .map(this::mapToResponse)
+        return restaurantUserRepository.findByRestaurantIdAndRole(restaurantId, AppRole.STAFF).stream()
+                .map(ru -> mapToResponse(ru.getUser(), ru.getRestaurant()))
                 .collect(Collectors.toList());
     }
 
     @Override
     public void deleteStaff(Long id) {
         User staff = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Staff not found"));
-        if (staff.getRole() != AppRole.STAFF) {
+        boolean isStaff = staff.getRoles().stream().anyMatch(r -> r.getName() == AppRole.STAFF);
+        if (!isStaff) {
             throw new ResourceNotFoundException("User is not a staff member");
         }
 
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
                 .getPrincipal();
 
-        Restaurant restaurant = staff.getRestaurant();
+        RestaurantUser mapping = restaurantUserRepository.findByUserId(staff.getId()).stream()
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Staff mapping not found"));
+
+        Restaurant restaurant = mapping.getRestaurant();
         if (restaurant == null || restaurant.getOwner() == null
                 || !restaurant.getOwner().getId().equals(userDetails.getId())) {
             throw new UnauthorizedException("You are not authorized to delete staff from this restaurant");
         }
 
+        restaurantUserRepository.delete(mapping);
         userRepository.deleteById(id);
     }
 
-    private StaffResponse mapToResponse(User user) {
+    private StaffResponse mapToResponse(User user, Restaurant restaurant) {
         return StaffResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .active(user.getActive())
-                .restaurantId(user.getRestaurant() != null ? user.getRestaurant().getId() : null)
-                .restaurantName(user.getRestaurant() != null ? user.getRestaurant().getName() : null)
+                .restaurantId(restaurant != null ? restaurant.getId() : null)
+                .restaurantName(restaurant != null ? restaurant.getName() : null)
                 .createdAt(user.getCreatedAt())
                 .build();
     }

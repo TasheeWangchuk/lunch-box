@@ -12,7 +12,9 @@ import com.lunchbox.lunch_box.common.exception.ResourceNotFoundException;
 import com.lunchbox.lunch_box.common.exception.UnauthorizedException;
 import com.lunchbox.lunch_box.modules.user.enums.AppRole;
 import com.lunchbox.lunch_box.modules.user.enums.AuthProvider;
+import com.lunchbox.lunch_box.modules.user.entity.Role;
 import com.lunchbox.lunch_box.modules.user.entity.User;
+import com.lunchbox.lunch_box.modules.user.repository.RoleRepository;
 import com.lunchbox.lunch_box.modules.user.repository.UserRepository;
 import com.lunchbox.lunch_box.security.jwt.JwtUtils;
 import com.lunchbox.lunch_box.security.services.UserDetailsImpl;
@@ -39,6 +41,7 @@ public class AuthServiceImpl implements AuthService {
 
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
     private final JwtDecoder googleJwtDecoder;
@@ -89,7 +92,9 @@ public class AuthServiceImpl implements AuthService {
                 // Username strategy: generate if missing
                 u.setUsername(makeUsername(name, email));
                 u.setPassword(null); // IMPORTANT for google users
-                u.setRole(AppRole.CUSTOMER);
+                Role customerRole = roleRepository.findByName(AppRole.CUSTOMER)
+                        .orElseGet(() -> roleRepository.save(new Role(AppRole.CUSTOMER)));
+                u.getRoles().add(customerRole);
                 u.setActive(true);
                 u.setCreatedAt(OffsetDateTime.now()); // if you use @CreationTimestamp, you can remove this
                 return u;
@@ -196,7 +201,9 @@ public class AuthServiceImpl implements AuthService {
             user.setProvider(AuthProvider.LOCAL);
             user.setProviderUserId(null);
             user.setEmailVerified(false);
-            user.setRole(AppRole.CUSTOMER);
+            Role customerRole = roleRepository.findByName(AppRole.CUSTOMER)
+                    .orElseGet(() -> roleRepository.save(new Role(AppRole.CUSTOMER)));
+            user.getRoles().add(customerRole);
             user.setActive(true);
 
             userRepository.save(user);

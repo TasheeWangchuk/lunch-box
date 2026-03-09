@@ -1,11 +1,13 @@
 package com.lunchbox.lunch_box.modules.user.repository;
 
-import com.lunchbox.lunch_box.modules.user.enums.AuthProvider;
 import com.lunchbox.lunch_box.modules.user.entity.User;
+import com.lunchbox.lunch_box.modules.user.enums.AuthProvider;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+@Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
 
@@ -13,8 +15,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByProviderAndProviderUserId(AuthProvider provider, String providerUserId);
 
-    java.util.List<User> findByRestaurantId(Long restaurantId);
+    Boolean existsByUsername(String username);
 
-    java.util.List<User> findByRestaurantIdAndRole(Long restaurantId,
-            com.lunchbox.lunch_box.modules.user.enums.AppRole role);
+    Boolean existsByEmail(String email);
 }

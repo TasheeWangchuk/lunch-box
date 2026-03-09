@@ -1,9 +1,12 @@
 package com.lunchbox.lunch_box.security.services;
 
 import com.lunchbox.lunch_box.modules.user.entity.User;
+import com.lunchbox.lunch_box.modules.user.entity.Role;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -44,10 +47,9 @@ public class UserDetailsImpl implements UserDetails {
 
     public static UserDetailsImpl build(User user) {
 
-        GrantedAuthority authority = new SimpleGrantedAuthority(
-                "ROLE_" + user.getRole().name());
-
-        List<GrantedAuthority> authorities = Collections.singletonList(authority);
+        List<GrantedAuthority> authorities = user.getRoles().stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName().name()))
+                .collect(Collectors.toList());
 
         return new UserDetailsImpl(
                 user.getId(),

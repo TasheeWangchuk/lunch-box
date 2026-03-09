@@ -2,7 +2,10 @@ package com.lunchbox.lunch_box.modules.user.mapper;
 
 import com.lunchbox.lunch_box.modules.user.dto.response.UserResponse;
 import com.lunchbox.lunch_box.modules.user.entity.User;
+import com.lunchbox.lunch_box.modules.user.entity.Role;
 import org.springframework.stereotype.Component;
+
+import java.util.stream.Collectors;
 
 @Component
 public class UserMapper {
@@ -18,7 +21,9 @@ public class UserMapper {
                 .email(user.getEmail())
                 .avatarUrl(user.getAvatarUrl())
                 .phone(user.getPhone())
-                .role(user.getRole())
+                .roles(user.getRoles().stream()
+                        .map(Role::getName)
+                        .collect(Collectors.toSet()))
                 .active(user.getActive())
                 .provider(user.getProvider())
                 .emailVerified(user.getEmailVerified())

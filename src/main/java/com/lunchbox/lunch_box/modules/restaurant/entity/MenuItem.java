@@ -1,47 +1,51 @@
 package com.lunchbox.lunch_box.modules.restaurant.entity;
 
-import com.lunchbox.lunch_box.modules.user.entity.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 @Data
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "restaurants")
-public class Restaurant {
+@Table(name = "menu_items")
+public class MenuItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "restaurant_id", nullable = false)
+    private Restaurant restaurant;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private MenuCategory category;
+
     @NotBlank
-    @Column(name = "name", nullable = false, length = 100)
+    @Column(length = 100, nullable = false)
     private String name;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "address", length = 255)
-    private String address;
+    @NotNull
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal price;
 
-    private Double latitude;
-    private Double longitude;
+    @Column(name = "image_url", length = 255)
+    private String imageUrl;
 
-    @Column(name = "contact_number", length = 20)
-    private String contactNumber;
-
-    @Column(name = "logo_url", length = 255)
-    private String logoUrl;
-
-    @Column(name = "is_active", nullable = false)
-    private Boolean active = Boolean.TRUE;
+    @Column(name = "is_available", nullable = false)
+    private Boolean available = Boolean.TRUE;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -50,8 +54,4 @@ public class Restaurant {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id")
-    private User owner;
 }

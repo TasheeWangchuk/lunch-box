@@ -1,5 +1,6 @@
 package com.lunchbox.lunch_box.security.jwt;
 
+import com.lunchbox.lunch_box.modules.user.entity.Role;
 import com.lunchbox.lunch_box.security.services.UserDetailsImpl;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -14,6 +15,7 @@ import org.springframework.web.util.WebUtils;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.stream.Collectors;
 
 @Component
 public class JwtUtils {
@@ -52,7 +54,9 @@ public class JwtUtils {
                 .claim("userId", userDetails.getId())
                 .claim("username", userDetails.getUsername())
                 .claim("email", userDetails.getEmail())
-                .claim("role", userDetails.getUser().getRole().name())
+                .claim("roles", userDetails.getUser().getRoles().stream()
+                        .map(role -> role.getName().name())
+                        .collect(Collectors.toList()))
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(getSigningKey())

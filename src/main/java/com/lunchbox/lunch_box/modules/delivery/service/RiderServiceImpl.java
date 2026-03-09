@@ -4,9 +4,11 @@ import com.lunchbox.lunch_box.modules.delivery.dto.request.CreateRiderRequest;
 import com.lunchbox.lunch_box.modules.delivery.dto.response.RiderResponse;
 import com.lunchbox.lunch_box.common.exception.ConflictException;
 import com.lunchbox.lunch_box.common.exception.ResourceNotFoundException;
+import com.lunchbox.lunch_box.modules.user.entity.Role;
 import com.lunchbox.lunch_box.modules.user.entity.User;
 import com.lunchbox.lunch_box.modules.user.enums.AppRole;
 import com.lunchbox.lunch_box.modules.user.enums.AuthProvider;
+import com.lunchbox.lunch_box.modules.user.repository.RoleRepository;
 import com.lunchbox.lunch_box.modules.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,6 +23,7 @@ import java.util.stream.Collectors;
 public class RiderServiceImpl implements RiderService {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -38,7 +41,9 @@ public class RiderServiceImpl implements RiderService {
         rider.setEmail(request.getEmail());
         rider.setPassword(passwordEncoder.encode(request.getPassword()));
         rider.setPhone(request.getPhone());
-        rider.setRole(AppRole.RIDER);
+        Role riderRole = roleRepository.findByName(AppRole.RIDER)
+                .orElseGet(() -> roleRepository.save(new Role(AppRole.RIDER)));
+        rider.getRoles().add(riderRole);
         rider.setProvider(AuthProvider.LOCAL);
         rider.setActive(true);
         rider.setEmailVerified(false);
@@ -52,7 +57,8 @@ public class RiderServiceImpl implements RiderService {
         User rider = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Rider not found"));
 
-        if (rider.getRole() != AppRole.RIDER) {
+        boolean isRider = rider.getRoles().stream().anyMatch(r -> r.getName() == AppRole.RIDER);
+        if (!isRider) {
             throw new ResourceNotFoundException("User is not a rider");
         }
 
@@ -62,7 +68,7 @@ public class RiderServiceImpl implements RiderService {
     @Override
     public List<RiderResponse> getAllRiders() {
         return userRepository.findAll().stream()
-                .filter(u -> u.getRole() == AppRole.RIDER)
+                .filter(u -> u.getRoles().stream().anyMatch(r -> r.getName() == AppRole.RIDER))
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -71,7 +77,8 @@ public class RiderServiceImpl implements RiderService {
     public void deleteRider(Long id) {
         User rider = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Rider not found"));
-        if (rider.getRole() == AppRole.RIDER) {
+        boolean isRider = rider.getRoles().stream().anyMatch(r -> r.getName() == AppRole.RIDER);
+        if (isRider) {
             userRepository.deleteById(id);
         }
     }
