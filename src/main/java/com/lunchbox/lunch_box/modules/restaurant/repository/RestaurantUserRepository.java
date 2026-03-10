@@ -1,7 +1,7 @@
 package com.lunchbox.lunch_box.modules.restaurant.repository;
 
 import com.lunchbox.lunch_box.modules.restaurant.entity.RestaurantUser;
-import com.lunchbox.lunch_box.modules.user.enums.AppRole;
+import com.lunchbox.lunch_box.modules.restaurant.enums.RestaurantRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -12,7 +12,7 @@ import java.util.Optional;
 public interface RestaurantUserRepository extends JpaRepository<RestaurantUser, Long> {
     List<RestaurantUser> findByRestaurantId(Long restaurantId);
 
-    List<RestaurantUser> findByRestaurantIdAndRole(Long restaurantId, AppRole role);
+    List<RestaurantUser> findByRestaurantIdAndRole(Long restaurantId, RestaurantRole role);
 
     Optional<RestaurantUser> findByRestaurantIdAndUserId(Long restaurantId, Long userId);
 

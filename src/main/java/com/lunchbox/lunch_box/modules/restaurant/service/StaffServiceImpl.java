@@ -7,6 +7,7 @@ import com.lunchbox.lunch_box.common.exception.ResourceNotFoundException;
 import com.lunchbox.lunch_box.common.exception.UnauthorizedException;
 import com.lunchbox.lunch_box.modules.restaurant.entity.Restaurant;
 import com.lunchbox.lunch_box.modules.restaurant.entity.RestaurantUser;
+import com.lunchbox.lunch_box.modules.restaurant.enums.RestaurantRole;
 import com.lunchbox.lunch_box.modules.restaurant.repository.RestaurantRepository;
 import com.lunchbox.lunch_box.modules.restaurant.repository.RestaurantUserRepository;
 import com.lunchbox.lunch_box.modules.user.entity.Role;
@@ -48,21 +49,16 @@ public class StaffServiceImpl implements StaffService {
         Restaurant restaurant = restaurantRepository.findById(request.getRestaurantId())
                 .orElseThrow(() -> new ResourceNotFoundException("Restaurant not found"));
 
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
-                .getPrincipal();
-
-        if (restaurant.getOwner() == null || !restaurant.getOwner().getId().equals(userDetails.getId())) {
-            throw new UnauthorizedException("You are not authorized to add staff to this restaurant");
-        }
-
         User staff = new User();
         staff.setUsername(request.getUsername());
         staff.setEmail(request.getEmail());
         staff.setPassword(passwordEncoder.encode(request.getPassword()));
         staff.setPhone(request.getPhone());
-        Role staffRole = roleRepository.findByName(AppRole.STAFF)
-                .orElseGet(() -> roleRepository.save(new Role(AppRole.STAFF)));
-        staff.getRoles().add(staffRole);
+        // Staff users hold CUSTOMER as their global platform role.
+        // Their restaurant-level role (STAFF) is tracked in RestaurantUser.
+        Role customerRole = roleRepository.findByName(AppRole.CUSTOMER)
+                .orElseGet(() -> roleRepository.save(new Role(AppRole.CUSTOMER)));
+        staff.getRoles().add(customerRole);
         staff.setProvider(AuthProvider.LOCAL);
         staff.setActive(true);
         staff.setEmailVerified(false);
@@ -71,7 +67,8 @@ public class StaffServiceImpl implements StaffService {
         RestaurantUser restaurantUser = new RestaurantUser();
         restaurantUser.setRestaurant(restaurant);
         restaurantUser.setUser(saved);
-        restaurantUser.setRole(AppRole.STAFF);
+        // RestaurantRole tracks the user's role within this specific restaurant
+        restaurantUser.setRole(RestaurantRole.STAFF);
         restaurantUser.setActive(true);
         restaurantUserRepository.save(restaurantUser);
 
@@ -80,57 +77,55 @@ public class StaffServiceImpl implements StaffService {
 
     @Override
     public StaffResponse getStaffById(Long id) {
-        User staff = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Staff not found"));
-
-        boolean isStaff = staff.getRoles().stream().anyMatch(r -> r.getName() == AppRole.STAFF);
-        if (!isStaff) {
-            throw new ResourceNotFoundException("User is not a staff member");
-        }
-
-        RestaurantUser mapping = restaurantUserRepository.findByUserId(staff.getId()).stream()
+        // Verify the user actually has a restaurant assignment (i.e. is really staff)
+        RestaurantUser mapping = restaurantUserRepository.findByUserId(id).stream()
                 .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("Staff mapping not found"));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Staff not found or user has no restaurant assignment"));
+
+        User staff = mapping.getUser();
+
+        // Option 2: Admin can view any profile; a staff member can only view their own
+        UserDetailsImpl me = (UserDetailsImpl) SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal();
+        boolean isAdmin = me.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (!isAdmin && !me.getId().equals(id)) {
+            throw new UnauthorizedException("You can only view your own profile");
+        }
 
         return mapToResponse(staff, mapping.getRestaurant());
     }
 
     @Override
     public List<StaffResponse> getStaffByRestaurant(Long restaurantId) {
-        Restaurant restaurant = restaurantRepository.findById(restaurantId)
-                .orElseThrow(() -> new ResourceNotFoundException("Restaurant not found"));
-
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
-                .getPrincipal();
-
-        if (restaurant.getOwner() == null || !restaurant.getOwner().getId().equals(userDetails.getId())) {
-            throw new UnauthorizedException("You are not authorized to view staff for this restaurant");
+        if (!restaurantRepository.existsById(restaurantId)) {
+            throw new ResourceNotFoundException("Restaurant not found");
         }
 
-        return restaurantUserRepository.findByRestaurantIdAndRole(restaurantId, AppRole.STAFF).stream()
+        return restaurantUserRepository.findByRestaurantIdAndRole(restaurantId, RestaurantRole.STAFF).stream()
                 .map(ru -> mapToResponse(ru.getUser(), ru.getRestaurant()))
                 .collect(Collectors.toList());
     }
 
     @Override
     public void deleteStaff(Long id) {
-        User staff = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Staff not found"));
-        boolean isStaff = staff.getRoles().stream().anyMatch(r -> r.getName() == AppRole.STAFF);
-        if (!isStaff) {
-            throw new ResourceNotFoundException("User is not a staff member");
+        // Verify via RestaurantUser — no longer relies on AppRole.STAFF
+        User staff = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Staff not found"));
+        boolean isRestaurantMember = restaurantUserRepository.findByUserId(id).stream()
+                .anyMatch(ru -> ru.getRole() == RestaurantRole.STAFF || ru.getRole() == RestaurantRole.MANAGER);
+        if (!isRestaurantMember) {
+            throw new ResourceNotFoundException("User has no restaurant assignment");
         }
-
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
-                .getPrincipal();
 
         RestaurantUser mapping = restaurantUserRepository.findByUserId(staff.getId()).stream()
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("Staff mapping not found"));
 
         Restaurant restaurant = mapping.getRestaurant();
-        if (restaurant == null || restaurant.getOwner() == null
-                || !restaurant.getOwner().getId().equals(userDetails.getId())) {
-            throw new UnauthorizedException("You are not authorized to delete staff from this restaurant");
+        if (restaurant == null) {
+            throw new ResourceNotFoundException("Restaurant mapping is invalid");
         }
 
         restaurantUserRepository.delete(mapping);

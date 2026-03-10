@@ -1,7 +1,7 @@
 package com.lunchbox.lunch_box.modules.restaurant.entity;
 
+import com.lunchbox.lunch_box.modules.restaurant.enums.RestaurantRole;
 import com.lunchbox.lunch_box.modules.user.entity.User;
-import com.lunchbox.lunch_box.modules.user.enums.AppRole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -28,9 +28,13 @@ public class RestaurantUser {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    /**
+     * The role this user holds within this specific restaurant.
+     * Use RestaurantRole (not AppRole) — restaurant-scoped assignment.
+     */
     @Enumerated(EnumType.STRING)
     @Column(length = 30, nullable = false)
-    private AppRole role;
+    private RestaurantRole role;
 
     @Column(name = "is_active", nullable = false)
     private Boolean active = Boolean.TRUE;

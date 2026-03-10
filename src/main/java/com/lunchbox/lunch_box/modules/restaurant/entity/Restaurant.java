@@ -1,6 +1,5 @@
 package com.lunchbox.lunch_box.modules.restaurant.entity;
 
-import com.lunchbox.lunch_box.modules.user.entity.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -10,6 +9,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Entity
@@ -37,8 +38,16 @@ public class Restaurant {
     @Column(name = "contact_number", length = 20)
     private String contactNumber;
 
-    @Column(name = "logo_url", length = 255)
-    private String logoUrl;
+    @ElementCollection
+    @CollectionTable(name = "restaurant_cuisines", joinColumns = @JoinColumn(name = "restaurant_id"))
+    @Column(name = "cuisine_type")
+    private List<String> cuisineTypes = new ArrayList<>();
+
+    @Column(name = "opening_hours", length = 100)
+    private String openingHours;
+
+    @Column(name = "image_url", length = 255)
+    private String imageUrl;
 
     @Column(name = "is_active", nullable = false)
     private Boolean active = Boolean.TRUE;
@@ -50,8 +59,4 @@ public class Restaurant {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id")
-    private User owner;
 }

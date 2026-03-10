@@ -31,7 +31,7 @@ public class StaffController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    @PreAuthorize("isAuthenticated()") // Admin can view any; staff can only view their own — enforced in service
     public ResponseEntity<ApiResponse<StaffResponse>> getStaffById(@PathVariable Long id) {
         StaffResponse staff = staffService.getStaffById(id);
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK.value(), "Staff retrieved successfully", staff));
