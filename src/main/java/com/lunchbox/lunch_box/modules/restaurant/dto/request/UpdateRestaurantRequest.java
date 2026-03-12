@@ -21,6 +21,8 @@ public class UpdateRestaurantRequest {
 
     private String imageUrl;
 
+    private String logoUrl;
+
     private Double latitude;
 
     private Double longitude;

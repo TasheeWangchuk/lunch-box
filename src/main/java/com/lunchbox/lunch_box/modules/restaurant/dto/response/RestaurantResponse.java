@@ -16,6 +16,7 @@ public class RestaurantResponse {
     private List<String> cuisineTypes;
     private String openingHours;
     private String imageUrl;
+    private String logoUrl;
     private Double latitude;
     private Double longitude;
     private Boolean active;

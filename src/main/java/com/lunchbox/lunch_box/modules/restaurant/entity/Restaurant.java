@@ -49,6 +49,9 @@ public class Restaurant {
     @Column(name = "image_url", length = 255)
     private String imageUrl;
 
+    @Column(name = "logo_url", length = 255)
+    private String logoUrl;
+
     @Column(name = "is_active", nullable = false)
     private Boolean active = Boolean.TRUE;
 

@@ -28,6 +28,7 @@ public class RestaurantServiceImpl implements RestaurantService {
         restaurant.setCuisineTypes(request.getCuisineTypes());
         restaurant.setOpeningHours(request.getOpeningHours());
         restaurant.setImageUrl(request.getImageUrl());
+        restaurant.setLogoUrl(request.getLogoUrl());
         restaurant.setLatitude(request.getLatitude());
         restaurant.setLongitude(request.getLongitude());
         restaurant.setActive(true);
@@ -62,6 +63,7 @@ public class RestaurantServiceImpl implements RestaurantService {
         restaurant.setCuisineTypes(request.getCuisineTypes());
         restaurant.setOpeningHours(request.getOpeningHours());
         restaurant.setImageUrl(request.getImageUrl());
+        restaurant.setLogoUrl(request.getLogoUrl());
         restaurant.setLatitude(request.getLatitude());
         restaurant.setLongitude(request.getLongitude());
 
@@ -91,6 +93,7 @@ public class RestaurantServiceImpl implements RestaurantService {
                 .cuisineTypes(restaurant.getCuisineTypes())
                 .openingHours(restaurant.getOpeningHours())
                 .imageUrl(restaurant.getImageUrl())
+                .logoUrl(restaurant.getLogoUrl())
                 .latitude(restaurant.getLatitude())
                 .longitude(restaurant.getLongitude())
                 .active(restaurant.getActive())
