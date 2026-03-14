@@ -1,5 +1,6 @@
-package com.lunchbox.lunch_box.modules.restaurant.entity;
+package com.lunchbox.lunch_box.modules.menu.entity;
 
+import com.lunchbox.lunch_box.modules.restaurant.entity.Restaurant;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -11,6 +12,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Entity
@@ -41,8 +44,8 @@ public class MenuItem {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
-    @Column(name = "image_url", length = 255)
-    private String imageUrl;
+    @OneToMany(mappedBy = "menuItem", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MenuItemImage> images = new ArrayList<>();
 
     @Column(name = "is_available", nullable = false)
     private Boolean available = Boolean.TRUE;

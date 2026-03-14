@@ -1,7 +1,6 @@
 package com.lunchbox.lunch_box.modules.order.entity;
 
-import com.lunchbox.lunch_box.modules.order.enums.OrderStatus;
-import com.lunchbox.lunch_box.modules.order.enums.PaymentStatus;
+import com.lunchbox.lunch_box.modules.payment.enums.PaymentStatus;
 import com.lunchbox.lunch_box.modules.restaurant.entity.Restaurant;
 import com.lunchbox.lunch_box.modules.user.entity.Address;
 import com.lunchbox.lunch_box.modules.user.entity.User;
@@ -40,10 +39,9 @@ public class Order {
     @JoinColumn(name = "delivery_address_id", nullable = false)
     private Address deliveryAddress;
 
-    @NotNull
-    @Enumerated(EnumType.STRING)
-    @Column(length = 30, nullable = false)
-    private OrderStatus status = OrderStatus.PENDING;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "status_id", nullable = false)
+    private OrderStatus status;
 
     @NotNull
     @Column(name = "total_price", nullable = false, precision = 10, scale = 2)

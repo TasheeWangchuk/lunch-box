@@ -1,4 +1,4 @@
-package com.lunchbox.lunch_box.modules.order.entity;
+package com.lunchbox.lunch_box.modules.cart.entity;
 
 import com.lunchbox.lunch_box.modules.menu.entity.MenuItem;
 import jakarta.persistence.*;
@@ -13,15 +13,16 @@ import java.math.BigDecimal;
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "order_items")
-public class OrderItem {
+@Table(name = "cart_items")
+public class CartItem {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", nullable = false)
-    private Order order;
+    @JoinColumn(name = "cart_id", nullable = false)
+    private Cart cart;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "menu_item_id", nullable = false)
@@ -34,8 +35,4 @@ public class OrderItem {
     @NotNull
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
-
-    @NotNull
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal total;
 }

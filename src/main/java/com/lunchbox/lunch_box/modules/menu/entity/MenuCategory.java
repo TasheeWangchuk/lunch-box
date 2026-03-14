@@ -1,5 +1,6 @@
-package com.lunchbox.lunch_box.modules.restaurant.entity;
+package com.lunchbox.lunch_box.modules.menu.entity;
 
+import com.lunchbox.lunch_box.modules.restaurant.entity.Restaurant;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;

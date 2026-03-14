@@ -1,6 +1,6 @@
-package com.lunchbox.lunch_box.modules.restaurant.repository;
+package com.lunchbox.lunch_box.modules.menu.repository;
 
-import com.lunchbox.lunch_box.modules.restaurant.entity.MenuCategory;
+import com.lunchbox.lunch_box.modules.menu.entity.MenuCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

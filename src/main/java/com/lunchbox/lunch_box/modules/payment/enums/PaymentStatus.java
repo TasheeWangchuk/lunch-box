@@ -1,4 +1,4 @@
-package com.lunchbox.lunch_box.modules.order.enums;
+package com.lunchbox.lunch_box.modules.payment.enums;
 
 public enum PaymentStatus {
     PENDING,
