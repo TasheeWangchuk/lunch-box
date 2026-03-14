@@ -72,7 +72,7 @@ public class StaffServiceImpl implements StaffService {
         restaurantUser.setActive(true);
         restaurantUserRepository.save(restaurantUser);
 
-        return mapToResponse(saved, restaurant);
+        return mapToResponse(saved, restaurantUser);
     }
 
     @Override
@@ -94,7 +94,7 @@ public class StaffServiceImpl implements StaffService {
             throw new UnauthorizedException("You can only view your own profile");
         }
 
-        return mapToResponse(staff, mapping.getRestaurant());
+        return mapToResponse(staff, mapping);
     }
 
     @Override
@@ -104,7 +104,7 @@ public class StaffServiceImpl implements StaffService {
         }
 
         return restaurantUserRepository.findByRestaurantIdAndRole(restaurantId, RestaurantRole.STAFF).stream()
-                .map(ru -> mapToResponse(ru.getUser(), ru.getRestaurant()))
+                .map(ru -> mapToResponse(ru.getUser(), ru))
                 .collect(Collectors.toList());
     }
 
@@ -132,16 +132,38 @@ public class StaffServiceImpl implements StaffService {
         userRepository.deleteById(id);
     }
 
+    @Override
+    @Transactional
+    public StaffResponse updateStaffRole(Long staffId, RestaurantRole newRole) {
+        RestaurantUser mapping = restaurantUserRepository.findByUserId(staffId).stream()
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Staff mapping not found"));
+
+        mapping.setRole(newRole);
+        restaurantUserRepository.save(mapping);
+
+        return mapToResponse(mapping.getUser(), mapping);
+    }
+
     private StaffResponse mapToResponse(User user, Restaurant restaurant) {
+        RestaurantUser mapping = restaurantUserRepository.findByUserId(user.getId()).stream()
+                .findFirst()
+                .orElse(null);
+        return mapToResponse(user, mapping);
+    }
+
+    private StaffResponse mapToResponse(User user, RestaurantUser mapping) {
+        Restaurant restaurant = mapping != null ? mapping.getRestaurant() : null;
         return StaffResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .phone(user.getPhone())
-                .active(user.getActive())
+                .isActive(mapping != null ? mapping.getActive() : user.getActive())
+                .role(mapping != null ? mapping.getRole() : null)
                 .restaurantId(restaurant != null ? restaurant.getId() : null)
                 .restaurantName(restaurant != null ? restaurant.getName() : null)
-                .createdAt(user.getCreatedAt())
+                .joinedAt(mapping != null ? mapping.getJoinedAt() : user.getCreatedAt())
                 .build();
     }
 }

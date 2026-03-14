@@ -1,5 +1,7 @@
 package com.lunchbox.lunch_box.modules.restaurant.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.lunchbox.lunch_box.modules.restaurant.enums.RestaurantRole;
 import lombok.Builder;
 import lombok.Data;
 import java.time.OffsetDateTime;
@@ -11,8 +13,17 @@ public class StaffResponse {
     private String username;
     private String email;
     private String phone;
-    private Boolean active;
+    
+    @JsonProperty("is_active")
+    private Boolean isActive;
+    
+    private RestaurantRole role;
+    
     private Long restaurantId;
+    
+    @JsonProperty("restaurant_name")
     private String restaurantName;
-    private OffsetDateTime createdAt;
+    
+    @JsonProperty("joined_at")
+    private OffsetDateTime joinedAt;
 }

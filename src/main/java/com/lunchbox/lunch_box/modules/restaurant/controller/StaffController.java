@@ -2,6 +2,7 @@ package com.lunchbox.lunch_box.modules.restaurant.controller;
 
 import com.lunchbox.lunch_box.common.dto.response.ApiResponse;
 import com.lunchbox.lunch_box.modules.restaurant.dto.request.CreateStaffRequest;
+import com.lunchbox.lunch_box.modules.restaurant.dto.request.UpdateStaffRoleRequest;
 import com.lunchbox.lunch_box.modules.restaurant.dto.response.StaffResponse;
 import com.lunchbox.lunch_box.modules.restaurant.service.StaffService;
 import jakarta.validation.Valid;
@@ -28,6 +29,15 @@ public class StaffController {
         return new ResponseEntity<>(
                 ApiResponse.success(HttpStatus.CREATED.value(), "Staff created successfully", staff),
                 HttpStatus.CREATED);
+    }
+
+    @PatchMapping("/{id}/role")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<StaffResponse>> updateStaffRole(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateStaffRoleRequest request) {
+        StaffResponse staff = staffService.updateStaffRole(id, request.getRole());
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK.value(), "Staff role updated successfully", staff));
     }
 
     @GetMapping("/{id}")
