@@ -31,6 +31,13 @@ public class StaffController {
                 HttpStatus.CREATED);
     }
 
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<StaffResponse>>> getAllStaff() {
+        List<StaffResponse> staffList = staffService.getAllStaff();
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK.value(), "All staff members retrieved successfully", staffList));
+    }
+
     @PatchMapping("/{id}/role")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<StaffResponse>> updateStaffRole(

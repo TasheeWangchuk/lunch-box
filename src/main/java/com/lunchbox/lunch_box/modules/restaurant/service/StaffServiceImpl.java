@@ -103,7 +103,7 @@ public class StaffServiceImpl implements StaffService {
             throw new ResourceNotFoundException("Restaurant not found");
         }
 
-        return restaurantUserRepository.findByRestaurantIdAndRole(restaurantId, RestaurantRole.STAFF).stream()
+        return restaurantUserRepository.findByRestaurantId(restaurantId).stream()
                 .map(ru -> mapToResponse(ru.getUser(), ru))
                 .collect(Collectors.toList());
     }
@@ -143,6 +143,13 @@ public class StaffServiceImpl implements StaffService {
         restaurantUserRepository.save(mapping);
 
         return mapToResponse(mapping.getUser(), mapping);
+    }
+
+    @Override
+    public List<StaffResponse> getAllStaff() {
+        return restaurantUserRepository.findAll().stream()
+                .map(ru -> mapToResponse(ru.getUser(), ru))
+                .collect(Collectors.toList());
     }
 
     private StaffResponse mapToResponse(User user, Restaurant restaurant) {

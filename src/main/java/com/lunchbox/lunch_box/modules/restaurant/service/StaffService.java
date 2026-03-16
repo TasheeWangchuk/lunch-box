@@ -12,4 +12,5 @@ public interface StaffService {
     List<StaffResponse> getStaffByRestaurant(Long restaurantId);
     void deleteStaff(Long id);
     StaffResponse updateStaffRole(Long staffId, RestaurantRole newRole);
+    List<StaffResponse> getAllStaff();
 }

@@ -14,16 +14,13 @@ public class StaffResponse {
     private String email;
     private String phone;
     
-    @JsonProperty("is_active")
     private Boolean isActive;
     
     private RestaurantRole role;
     
     private Long restaurantId;
     
-    @JsonProperty("restaurant_name")
     private String restaurantName;
     
-    @JsonProperty("joined_at")
     private OffsetDateTime joinedAt;
 }
