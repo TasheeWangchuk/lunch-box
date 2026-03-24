@@ -1,6 +1,7 @@
 package com.lunchbox.lunch_box.modules.user.controller;
 
 import com.lunchbox.lunch_box.common.dto.response.ApiResponse;
+import com.lunchbox.lunch_box.modules.restaurant.dto.response.UserRestaurantResponse;
 import com.lunchbox.lunch_box.modules.user.dto.request.UpdateUserRequest;
 import com.lunchbox.lunch_box.modules.user.dto.response.UserResponse;
 import com.lunchbox.lunch_box.modules.user.service.UserService;
@@ -32,6 +33,12 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserResponse>> updateCurrentUser(@Valid @RequestBody UpdateUserRequest request) {
         UserResponse user = userService.updateUserProfile(request);
         return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK.value(), "User profile updated successfully", user));
+    }
+
+    @GetMapping("/me/restaurants")
+    public ResponseEntity<ApiResponse<List<UserRestaurantResponse>>> getCurrentUserRestaurants() {
+        List<UserRestaurantResponse> restaurants = userService.getRestaurantsForCurrentUser();
+        return ResponseEntity.ok(ApiResponse.success(HttpStatus.OK.value(), "User restaurants retrieved successfully", restaurants));
     }
 
     @GetMapping("/{id}")

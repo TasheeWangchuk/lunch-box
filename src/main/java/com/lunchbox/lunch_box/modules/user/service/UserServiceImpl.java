@@ -6,6 +6,8 @@ import com.lunchbox.lunch_box.common.exception.ResourceNotFoundException;
 import com.lunchbox.lunch_box.modules.user.entity.User;
 import com.lunchbox.lunch_box.modules.user.mapper.UserMapper;
 import com.lunchbox.lunch_box.modules.user.repository.UserRepository;
+import com.lunchbox.lunch_box.modules.restaurant.dto.response.UserRestaurantResponse;
+import com.lunchbox.lunch_box.modules.restaurant.repository.RestaurantUserRepository;
 import com.lunchbox.lunch_box.security.services.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,6 +22,7 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final RestaurantUserRepository restaurantUserRepository;
     private final UserMapper userMapper;
 
     @Override
@@ -72,5 +75,22 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         userRepository.delete(user);
+    }
+
+    @Override
+    public List<UserRestaurantResponse> getRestaurantsForCurrentUser() {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
+                .getPrincipal();
+        
+        return restaurantUserRepository.findByUserId(userDetails.getId()).stream()
+                .map(ru -> UserRestaurantResponse.builder()
+                        .restaurantId(ru.getRestaurant().getId())
+                        .name(ru.getRestaurant().getName())
+                        .address(ru.getRestaurant().getAddress())
+                        .imageUrl(ru.getRestaurant().getImageUrl())
+                        .isActive(ru.getRestaurant().getActive())
+                        .role(ru.getRole())
+                        .build())
+                .collect(Collectors.toList());
     }
 }
