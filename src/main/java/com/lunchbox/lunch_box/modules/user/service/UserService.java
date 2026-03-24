@@ -1,5 +1,6 @@
 package com.lunchbox.lunch_box.modules.user.service;
 
+import com.lunchbox.lunch_box.modules.user.dto.request.ChangePasswordRequest;
 import com.lunchbox.lunch_box.modules.user.dto.request.UpdateUserRequest;
 import com.lunchbox.lunch_box.modules.user.dto.response.UserResponse;
 
@@ -17,6 +18,8 @@ public interface UserService {
     List<UserResponse> getAllUsers();
 
     void deleteUser(Long id);
+
+    void changePassword(ChangePasswordRequest request);
 
     List<UserRestaurantResponse> getRestaurantsForCurrentUser();
 }
