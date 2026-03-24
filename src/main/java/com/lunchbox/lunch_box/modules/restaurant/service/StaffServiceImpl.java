@@ -152,6 +152,19 @@ public class StaffServiceImpl implements StaffService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional
+    public StaffResponse toggleStaffActive(Long staffId, boolean active) {
+        RestaurantUser mapping = restaurantUserRepository.findByUserId(staffId).stream()
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Staff mapping not found"));
+
+        mapping.setActive(active);
+        restaurantUserRepository.save(mapping);
+
+        return mapToResponse(mapping.getUser(), mapping);
+    }
+
     private StaffResponse mapToResponse(User user, Restaurant restaurant) {
         RestaurantUser mapping = restaurantUserRepository.findByUserId(user.getId()).stream()
                 .findFirst()
@@ -170,6 +183,7 @@ public class StaffServiceImpl implements StaffService {
                 .role(mapping != null ? mapping.getRole() : null)
                 .restaurantId(restaurant != null ? restaurant.getId() : null)
                 .restaurantName(restaurant != null ? restaurant.getName() : null)
+                .profileImg(user.getAvatarUrl())
                 .joinedAt(mapping != null ? mapping.getJoinedAt() : user.getCreatedAt())
                 .build();
     }

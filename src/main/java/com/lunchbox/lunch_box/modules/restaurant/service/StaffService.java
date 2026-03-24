@@ -13,4 +13,5 @@ public interface StaffService {
     void deleteStaff(Long id);
     StaffResponse updateStaffRole(Long staffId, RestaurantRole newRole);
     List<StaffResponse> getAllStaff();
+    StaffResponse toggleStaffActive(Long staffId, boolean active);
 }

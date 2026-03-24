@@ -19,8 +19,10 @@ public class StaffResponse {
     private RestaurantRole role;
     
     private Long restaurantId;
-    
+
     private String restaurantName;
-    
+
+    private String profileImg;
+
     private OffsetDateTime joinedAt;
 }
