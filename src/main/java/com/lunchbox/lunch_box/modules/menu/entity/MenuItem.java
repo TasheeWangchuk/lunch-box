@@ -1,5 +1,6 @@
 package com.lunchbox.lunch_box.modules.menu.entity;
 
+import com.lunchbox.lunch_box.modules.menu.enums.SpicyLevel;
 import com.lunchbox.lunch_box.modules.restaurant.entity.Restaurant;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -49,6 +50,16 @@ public class MenuItem {
 
     @Column(name = "is_available", nullable = false)
     private Boolean available = Boolean.TRUE;
+
+    @Column(name = "is_veg", nullable = false)
+    private Boolean isVeg = Boolean.FALSE;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "spicy_level")
+    private SpicyLevel spicyLevel = SpicyLevel.MILD;
+
+    @Column(name = "prep_time_minutes")
+    private Integer prepTimeMinutes;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

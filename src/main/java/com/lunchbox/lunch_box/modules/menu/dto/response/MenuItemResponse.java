@@ -1,5 +1,6 @@
 package com.lunchbox.lunch_box.modules.menu.dto.response;
 
+import com.lunchbox.lunch_box.modules.menu.enums.SpicyLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,4 +23,7 @@ public class MenuItemResponse {
     private BigDecimal price;
     private List<String> imageUrls;
     private Boolean available;
+    private Boolean isVeg;
+    private SpicyLevel spicyLevel;
+    private Integer prepTimeMinutes;
 }

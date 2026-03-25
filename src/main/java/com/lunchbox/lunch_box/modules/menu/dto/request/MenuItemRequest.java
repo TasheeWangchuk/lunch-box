@@ -1,5 +1,6 @@
 package com.lunchbox.lunch_box.modules.menu.dto.request;
 
+import com.lunchbox.lunch_box.modules.menu.enums.SpicyLevel;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -26,4 +27,7 @@ public class MenuItemRequest {
     private BigDecimal price;
     private List<String> imageUrls;
     private Boolean available;
+    private Boolean isVeg;
+    private SpicyLevel spicyLevel;
+    private Integer prepTimeMinutes;
 }
