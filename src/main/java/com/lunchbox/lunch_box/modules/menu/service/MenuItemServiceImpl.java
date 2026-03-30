@@ -41,6 +41,9 @@ public class MenuItemServiceImpl implements MenuItemService {
         item.setDescription(request.getDescription());
         item.setPrice(request.getPrice());
         item.setAvailable(request.getAvailable() != null ? request.getAvailable() : true);
+        item.setIsVeg(request.getIsVeg());
+        item.setSpicyLevel(request.getSpicyLevel());
+        item.setPrepTimeMinutes(request.getPrepTimeMinutes());
         item.setRestaurant(restaurant);
         item.setCategory(category);
 
@@ -66,9 +69,10 @@ public class MenuItemServiceImpl implements MenuItemService {
         item.setName(request.getName());
         item.setDescription(request.getDescription());
         item.setPrice(request.getPrice());
-        if (request.getAvailable() != null) {
-            item.setAvailable(request.getAvailable());
-        }
+        item.setAvailable(request.getAvailable());
+        item.setIsVeg(request.getIsVeg());
+        item.setSpicyLevel(request.getSpicyLevel());
+        item.setPrepTimeMinutes(request.getPrepTimeMinutes());
 
         if (request.getCategoryId() != null && !request.getCategoryId().equals(item.getCategory().getId())) {
             MenuCategory category = categoryRepository.findById(request.getCategoryId())
